@@ -14,6 +14,10 @@
 using namespace std;
 using namespace msclr::interop;
 
+void printKernel(double*** kernel, int width, int height);
+void freeKernel(double*** kernel, int width);
+void inputKernel(double*** kernel, int* kernelSize);
+
 int* inputImage(int* w, int* h, System::String^ imagePath) //put the size of image in w & h
 {
 	int* input;
@@ -93,19 +97,56 @@ int main()
 	imagePath = marshal_as<System::String^>(img);
 	int* imageData = inputImage(&ImageWidth, &ImageHeight, imagePath);
 	
-	start_s = clock();
-	/*
+	//start_s = clock();
+	
+	int kernelSize = 0;
+	double** kernel;
 
-	*/
-	stop_s = clock();
-	TotalTime += (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000;
-	createImage(imageData, ImageWidth, ImageHeight, 1);
-	cout << "time: " << TotalTime << endl;
+	inputKernel(&kernel, &kernelSize);
+	printKernel(&kernel,kernelSize,kernelSize);
+	freeKernel(&kernel, kernelSize);
 
-	free(imageData);
+	//stop_s = clock();
+	//TotalTime += (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000;
+	//createImage(imageData, ImageWidth, ImageHeight, 1);
+	//cout << "time: " << TotalTime << endl;
+
+	//free(imageData);
+	system("pause");
 	return 0;
 
 }
 
+void printKernel(double*** kernel, int width, int height) {
+	cout << "kernel is" << endl;
+	for (int i = 0; i < width; i++) {
+		for (int j = 0; j < height; j++) {
+		
+			cout << (*kernel)[i][j] <<" ";
+		}
+		cout << endl;
+	}
+}
 
+void freeKernel(double*** kernel, int width) {
+	for (int i = 0; i < width; i++) {
+		delete[] (*kernel)[i];
+	}
+	delete[] *kernel;
+}
 
+void inputKernel(double*** kernel, int* kernelSize) {
+	cout << "Enter Kernel Size: ";
+	cin >> *kernelSize;
+	cout << *kernelSize << endl;
+	*kernel = new double* [*kernelSize];
+
+	for (int i = 0; i < *kernelSize; i++) {
+		(*kernel)[i] = new double[*kernelSize];
+		for (int j = 0; j < *kernelSize; j++) {
+			cout << "Kernel [" << i << "][" << j << "]: ";
+			cin >> (*kernel)[i][j];
+		}
+	}
+
+}
