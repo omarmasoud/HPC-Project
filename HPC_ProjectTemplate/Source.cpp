@@ -20,7 +20,7 @@ void inputKernel(double*** kernel, int* kernelSize);
 int	calculatePaddingValue(int kernelSize);
 double* inputImage(int* w, int* h, int* originalImageWidth, int* originalImageHeight, int padding, System::String^ imagePath);
 void createImage(double* image, int width, int height, int index);
-void applyFilter(double** image, double**result, int imageWidth, int imageHeight, double*** kernel, int kernelSize);
+void applyFilter(double** image, int length, int imageWidth, int imageHeight, double**result, int originalImageWidth, int orginalImageHeight, double*** kernel, int kernelSize);
 
 int main()
 {
@@ -31,28 +31,30 @@ int main()
 
 	System::String^ imagePath;
 	std::string img;
-	img = "..//Data//Input//test.png";
+	img = "..//Data//Input//lena.png";
 
-	imagePath = marshal_as<System::String^>(img);	
+	imagePath = marshal_as<System::String^>(img);
 	int kernelSize = 0;
 	double** kernel;
 
 	inputKernel(&kernel, &kernelSize);
-	printKernel(&kernel,kernelSize,kernelSize);
+	printKernel(&kernel, kernelSize, kernelSize);
 	int padding = calculatePaddingValue(kernelSize);
-	double* imageData = inputImage(&ImageWidth, &ImageHeight,&originalImageWidth, &originalImageHeight, padding, imagePath);
-
+	double* imageData = inputImage(&ImageWidth, &ImageHeight, &originalImageWidth, &originalImageHeight, padding, imagePath);
+	
 	double* resultImage = new double[originalImageWidth * originalImageHeight];
-	//applyFilter(&imageData,originalImageWidth, originalImageHeight,&kernel,kernelSize);
+
+	applyFilter(&imageData, ImageWidth * ImageHeight,ImageWidth,ImageHeight ,&resultImage,originalImageWidth,originalImageWidth,&kernel,kernelSize);
 	//start_s = clock();
 	//stop_s = clock();
 	//TotalTime += (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000;
 	//createImage(imageData, ImageWidth, ImageHeight, 1);
 	//cout << "time: " << TotalTime << endl;
-	createImage(imageData, ImageWidth, ImageHeight, 1);
+	createImage(resultImage, originalImageWidth, originalImageHeight, 1);
 
 	freeKernel(&kernel, kernelSize);
 	free(imageData);
+	delete[] resultImage;
 	system("pause");
 	return 0;
 
@@ -114,21 +116,21 @@ double* inputImage(int* w, int* h, int * originalImageWidth, int* originalImageH
 	double* Blue = new double[(*h) * (*w)];
 	input = new double[(*h) * (*w)];
 
-	for (int i = 0; i < *w; i++) { 
-		for (int j = 0; j < *h; j++) { 
+	for (int i = 0; i < *h; i++) { 
+		for (int j = 0; j < *w; j++) { 
 
-			if (i < padding || j < padding || i > BM.Width - 1 + padding || j > BM.Height - 1 + padding) {
-				Red[i * (*h)+ j] = 0;
-				Blue[i * (*h) + j] = 0;
-				Green[i * (*h) + j] = 0;
-				input[i * (*h) + j] = 0; //gray scale value equals the average of RGB values
+			if (i < padding || j < padding || j > BM.Width - 1 + padding || i > BM.Height - 1 + padding) {
+				Red[i * (*w)+ j] = 0;
+				Blue[i * (*w) + j] = 0;
+				Green[i * (*w) + j] = 0;
+				input[i * (*w) + j] = 0; //gray scale value equals the average of RGB values
 			}
 			else {
-				System::Drawing::Color c = BM.GetPixel(i - padding, j - padding);
-				Red[i * (*h) + j] = c.R;
-				Blue[i * (*h) + j] = c.B;
-				Green[i * (*h) + j] = c.G;
-				input[i * (*h) + j] = ((c.R + c.B + c.G) / 3); //gray scale value equals the average of RGB values
+				System::Drawing::Color c = BM.GetPixel(j - padding, i - padding);
+				Red[i * (*w) + j] = c.R;
+				Blue[i * (*w) + j] = c.B;
+				Green[i * (*w) + j] = c.G;
+				input[i * (*w) + j] = ((c.R + c.B + c.G) / 3); //gray scale value equals the average of RGB values
 			}
 		}
 	}
@@ -139,18 +141,18 @@ double* inputImage(int* w, int* h, int * originalImageWidth, int* originalImageH
 void createImage(double* image, int width, int height, int index){
 	System::Drawing::Bitmap MyNewImage(width, height);
 
-	for (int i = 0; i < MyNewImage.Width; i++) {
-		for (int j = 0; j < MyNewImage.Height; j++) {
-			if (image[i * height + j] < 0)
+	for (int i = 0; i < MyNewImage.Height; i++) {
+		for (int j = 0; j < MyNewImage.Width; j++) {
+			if (image[i * width + j] < 0)
 			{
-				image[i * height + j] = 0;
+				image[i * width + j] = 0;
 			}
-			if (image[i * height + j] > 255)
+			if (image[i * width + j] > 255)
 			{
-				image[i * height + j] = 255;
+				image[i * width + j] = 255;
 			}
-			System::Drawing::Color c = System::Drawing::Color::FromArgb(image[i * MyNewImage.Height + j], image[i * MyNewImage.Height + j], image[i * MyNewImage.Height + j]);
-			MyNewImage.SetPixel(i, j, c);
+			System::Drawing::Color c = System::Drawing::Color::FromArgb(image[i * MyNewImage.Width + j], image[i * MyNewImage.Width + j], image[i * MyNewImage.Width + j]);
+			MyNewImage.SetPixel(j, i, c);
 		}
 	}
 
@@ -158,7 +160,27 @@ void createImage(double* image, int width, int height, int index){
 	cout << "result Image Saved " << index << endl;
 }
 
-void applyFilter(double** image, int imageWidth, int imageHeight, double*** kernel, int kernelSize) {
+void applyFilter(double** image, int length, int imageWidth, int imageHeight, double** result, int originalImageWidth, int orginalImageHeight, double*** kernel, int kernelSize){
 
+	#pragma omp parallel num_threads(5)
+	{
+		#pragma omp for 
+		for (int i = 0; i < length; i++) {
+		
+			//calculate x,y
+			int x = i % imageWidth;
+			int y = i / imageWidth; 
+			if (x + kernelSize > imageWidth || y + kernelSize  > imageHeight)
+				continue;
 
+			(*result)[y * originalImageWidth + x] = 0;
+
+			//convol
+			for (int j = y; j < y + kernelSize; j++) {
+				for (int k = x; k < x + kernelSize; k++) {
+					(*result)[y* originalImageWidth + x] += (*image)[j * imageWidth + k] * (*kernel)[j-y][k-x];
+				}
+			}
+		}
+	}
 }
