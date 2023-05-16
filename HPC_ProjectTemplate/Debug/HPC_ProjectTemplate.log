@@ -1,5 +1,2 @@
-﻿  Source.cpp
-C:\Users\Yousef\OneDrive\Desktop\HPC\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(91,6): warning C4101: 'start_s': unreferenced local variable
-C:\Users\Yousef\OneDrive\Desktop\HPC\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(91,15): warning C4101: 'stop_s': unreferenced local variable
-  Source.obj : MSIL module encountered; incremental linking is disabled for MSIL; performing full link
+﻿  Source.obj : MSIL module encountered; incremental linking is disabled for MSIL; performing full link
   HPC_ProjectTemplate.vcxproj -> C:\Users\Yousef\OneDrive\Desktop\HPC\HPC_ProjectTemplate\Debug\HPC_ProjectTemplate.exe
