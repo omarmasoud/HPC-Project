@@ -43,13 +43,11 @@ int main()
 	double* imageData = inputImage(&ImageWidth, &ImageHeight, &originalImageWidth, &originalImageHeight, padding, imagePath);
 	
 	double* resultImage = new double[originalImageWidth * originalImageHeight];
-
+	start_s = clock();
 	applyFilter(&imageData, ImageWidth * ImageHeight,ImageWidth,ImageHeight ,&resultImage,originalImageWidth,originalImageWidth,&kernel,kernelSize);
-	//start_s = clock();
-	//stop_s = clock();
-	//TotalTime += (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000;
-	//createImage(imageData, ImageWidth, ImageHeight, 1);
-	//cout << "time: " << TotalTime << endl;
+	stop_s = clock();
+	TotalTime += (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000;
+	cout << "time: " << TotalTime << endl;
 	createImage(resultImage, originalImageWidth, originalImageHeight, 1);
 
 	freeKernel(&kernel, kernelSize);
@@ -162,7 +160,7 @@ void createImage(double* image, int width, int height, int index){
 
 void applyFilter(double** image, int length, int imageWidth, int imageHeight, double** result, int originalImageWidth, int orginalImageHeight, double*** kernel, int kernelSize){
 
-	#pragma omp parallel num_threads(5)
+	#pragma omp parallel num_threads(10)
 	{
 		#pragma omp for 
 		for (int i = 0; i < length; i++) {
