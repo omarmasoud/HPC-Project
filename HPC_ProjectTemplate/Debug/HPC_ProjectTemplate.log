@@ -1,7 +1,9 @@
 ﻿  Source.cpp
-C:\Users\omark\Desktop\HPC_ProjectTemplate\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(242,66): warning C4244: '+=': conversion from 'double' to 'int', possible loss of data
-C:\Users\omark\Desktop\HPC_ProjectTemplate\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(227,6): warning C4101: 'islast': unreferenced local variable
-C:\Users\omark\Desktop\HPC_ProjectTemplate\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(226,6): warning C4101: 'rowssent': unreferenced local variable
-C:\Users\omark\Desktop\HPC_ProjectTemplate\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(232,7): warning C4101: 'resultingimage': unreferenced local variable
+C:\Users\omark\Desktop\HPC_ProjectTemplate\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(372,66): warning C4244: '+=': conversion from 'double' to 'int', possible loss of data
+C:\Users\omark\Desktop\HPC_ProjectTemplate\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(231,6): warning C4101: 'islast': unreferenced local variable
+C:\Users\omark\Desktop\HPC_ProjectTemplate\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(230,6): warning C4101: 'rowssent': unreferenced local variable
+C:\Users\omark\Desktop\HPC_ProjectTemplate\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(236,7): warning C4101: 'resultingimage': unreferenced local variable
+  .NETFramework,Version=v4.0.AssemblyAttributes.cpp
+  Generating Code...
   Source.obj : MSIL module encountered; incremental linking is disabled for MSIL; performing full link
   HPC_ProjectTemplate.vcxproj -> C:\Users\omark\Desktop\HPC_ProjectTemplate\HPC_ProjectTemplate\Debug\HPC_ProjectTemplate.exe

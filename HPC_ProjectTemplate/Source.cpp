@@ -7,6 +7,7 @@
 #include <ctime>// include this header 
 #include<vector>
 #include<algorithm>
+
 #pragma once
 
 #using <mscorlib.dll>
@@ -16,6 +17,7 @@
 
 using namespace std;
 using namespace msclr::interop;
+
 #define TagStartindex  1
 #define  TagProcessorRows  2
 #define TagIsLast  3
@@ -124,7 +126,7 @@ int* createHighPassKernel(int size)
 {
 	// Check if the size is odd
 	if (size % 2 == 0)
-		size++; // Increment size to make it odd
+		size+=1; // Increment size to make it odd
 
 	// Calculate the center index of the kernel
 	int center = size / 2;
@@ -149,6 +151,8 @@ int* createHighPassKernel(int size)
 
 	return kernel;
 }
+
+
 int* applyKernel(int* kernel, int kernelSize, const int* paddedImage, int startIndex, int rowsPerProcessor, int paddedWidth, int paddedHeight, int& subsize) {
 
 
@@ -161,7 +165,7 @@ int* applyKernel(int* kernel, int kernelSize, const int* paddedImage, int startI
 	//for (int i = 0; i < subImageWidth * subImageHeight; i++) {
 	//	result[i] = 0;
 	//}
-	printf("startindex is %d\n", startIndex);
+	//printf("startindex is %d\n", startIndex);
 	for (int i = startIndex; i < startIndex + (rowsPerProcessor * paddedWidth); i++) {
 
 		int x = i % paddedWidth;
@@ -231,31 +235,46 @@ int main()
 	MPI_Status ReveiveStatus;
 	int* resultingimage;
 	int remainingrows;
+
+	int start_s, stop_s, TotalTime = 0;
 	if (rank == 0) {
-		int start_s, stop_s, TotalTime = 0;
+		
 
-		start_s = clock();
-		/*
 
-		*/
-		stop_s = clock();
-		TotalTime += (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000;
 		System::String^ imagePath;
 		std::string img;
 		img = "..//Data//Input//lena.png";
+		
 
+
+		
+		
+
+		cout << "enter the kernel size you want to create" << endl;
+		cin >> kernelsize;
+		int choice;
+		cout << "enter 1 to work on lena image by default and 2 to enter your image name" << endl;
+		cin >> choice;
+		if (choice != 1) {
+			string imgname;
+			cout << "enter your image name" << endl;
+			cin >> imgname;
+			img = "..//Data//Input//" + imgname + ".png";
+
+		}
 		imagePath = marshal_as<System::String^>(img);
 		int* imageData = inputImage(&ImageWidth, &ImageHeight, imagePath);
+		//kernelsize = 7;
+		start_s = clock();
 
-
-
-
-		/// <summary>
-		/// //////////////
-		/// </summary>
-		/// <returns></returns>
-		kernelsize = 7;
+		
 		kernel = createHighPassKernel(kernelsize);
+
+		if (kernelsize % 2 == 0)
+			kernelsize += 1;
+		
+		
+		
 		
 		
 		computePadding(imageData, ImageHeight, ImageWidth, kernelsize, paddedheight, paddedwidth, paddedimage);
@@ -349,6 +368,10 @@ int main()
 			recievedimg[i] = localImage[i - (size - 1) * receivedsubsize];
 		}
 		createImage(recievedimg, ImageWidth, ImageHeight, 1);
+		stop_s = clock();
+		TotalTime += (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000;
+
+		printf("total time elapsed by %d processes to go through image of dimensions %d by %d is %d ms \n", size, ImageWidth, ImageHeight, TotalTime);
 	}
 	
 
