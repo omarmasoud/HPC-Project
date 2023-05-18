@@ -5,12 +5,15 @@
 #include<msclr\marshal_cppstd.h>
 #include<mpi.h>
 #include <ctime>// include this header 
+#include<vector>
+#include<algorithm>
 #pragma once
 
 #using <mscorlib.dll>
 #using <System.dll>
 #using <System.Drawing.dll>
 #using <System.Windows.Forms.dll>
+
 using namespace std;
 using namespace msclr::interop;
 #define TagStartindex  1
@@ -146,91 +149,79 @@ int* createHighPassKernel(int size)
 
 	return kernel;
 }
-int* applyKernel(int* kernel, int kernelSize, const int* paddedImage, int startIndex, int rowsPerProcessor, int paddedWidth, int& subsize)
-{
-	int subImageWidth = paddedWidth - (kernelSize - 1);
-	int subImageHeight = rowsPerProcessor - (kernelSize - 1);
-	printf("conv width output is %d\nconv height output is %d\n", subImageWidth, subImageHeight);
-	subsize = subImageWidth * subImageHeight;
-	int* subImage = new int[subsize];
-	printf("start index is %d rowsperprocess is %d\n", startIndex, rowsPerProcessor);
+int* applyKernel(int* kernel, int kernelSize, const int* paddedImage, int startIndex, int rowsPerProcessor, int paddedWidth, int paddedHeight, int& subsize) {
 
-	// Iterate over each row of the sub-image
-	for (int i = 0; i < subImageHeight; i++)
-	{
-		// Calculate the current row index in the padded image
-		int paddedRowIndex = startIndex + i;
 
-		// Iterate over each column of the sub-image
-		for (int j = 0; j < subImageWidth; j++)
-		{
-			// Calculate the current column index in the padded image
-			int paddedColIndex = startIndex + j;
 
-			// Apply the kernel to the corresponding pixel in the sub-image
-			int sum = 0;
 
-			// Iterate over each row of the kernel
-			for (int k = 0; k < kernelSize; k++)
-			{
-				// Calculate the current row index in the kernel
-				int kernelRowIndex = k;
+	/*int subImageWidth = paddedWidth - (kernelSize - 1);
+	int subImageHeight = rowsPerProcessor - (kernelSize - 1);*/
+	vector<int> result;
+	//// intit result  = 0 ;
+	//for (int i = 0; i < subImageWidth * subImageHeight; i++) {
+	//	result[i] = 0;
+	//}
+	printf("startindex is %d\n", startIndex);
+	for (int i = startIndex; i < startIndex + (rowsPerProcessor * paddedWidth); i++) {
 
-				// Iterate over each column of the kernel
-				for (int l = 0; l < kernelSize; l++)
-				{
-					// Calculate the current column index in the kernel
-					int kernelColIndex = l;
+		int x = i % paddedWidth;
+		int y = i / paddedWidth;
 
-					// Calculate the corresponding pixel index in the padded image
-					int paddedPixelIndex = (paddedRowIndex + kernelRowIndex) * paddedWidth + (paddedColIndex + kernelColIndex);
+		int bottomRightX = x + kernelSize - 1;
+		int bottomRightY = y + kernelSize - 1;
+	
+		if (bottomRightX > paddedWidth - 1 || bottomRightY > paddedHeight - 1) {
+			
+			/*if (bottomRightY > paddedHeight - 1) {
+				printf("true bottom right y");
+			}
+			else{ printf("false bottom right y"); }*/
+			//printf("x is %d y is %d\n", x, y);
+			continue;
+			
+		}
 
-					// Multiply the kernel value with the corresponding pixel value in the padded image
-					int pixelValue = paddedImage[paddedPixelIndex];
-					int kernelValue = kernel[kernelRowIndex * kernelSize + kernelColIndex];
-					sum += pixelValue * kernelValue;
+
+		else {
+			int temp = 0;
+			for (int j = y; j < y + kernelSize; j++) {
+				
+				for (int k = x; k < x + kernelSize; k++) {
+					 temp += paddedImage[j * paddedWidth + k] * kernel[(j - y) * kernelSize + (k - x)];
+					
+					
+					
 				}
 			}
-
-			// Store the result of applying the kernel to the corresponding pixel in the sub-image
-			int subImagePixelIndex = i * subImageWidth + j;
-			subImage[subImagePixelIndex] = sum;
+			result.push_back(temp);
 		}
 	}
-
-	return subImage;
+	//printf("kernel applied vector size is  %d\n",result.size());
+	subsize = result.size();
+	int* returnresult=new int[result.size()];
+	copy(result.begin(), result.end(), returnresult);
+	return returnresult;
 }
-
 
 
 int main()
 {
 	int ImageWidth = 4, ImageHeight = 4;
 
-	int start_s, stop_s, TotalTime = 0;
+	
 	int rank, size;
 	MPI_Init(NULL, NULL);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-	System::String^ imagePath;
-	std::string img;
-	img = "..//Data//Input//test.png";
+	
 
-	imagePath = marshal_as<System::String^>(img);
-	int* imageData = inputImage(&ImageWidth, &ImageHeight, imagePath);
-
-	start_s = clock();
-	/*
-
-	*/
-	stop_s = clock();
-	TotalTime += (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000;
+	
 	int kernelsize = 0;
 	int* kernel = NULL;
 	int paddedheight;
 	int paddedwidth;
-	int* paddedimage = NULL;
+	int* paddedimage ;
 	int startindex=0;
 	int rowssent;
 	int islast;
@@ -238,88 +229,140 @@ int main()
 	int rowsperprocessor;
 	int subsize;
 	MPI_Status ReveiveStatus;
-	
+	int* resultingimage;
+	int remainingrows;
 	if (rank == 0) {
-		kernelsize = 3;
+		int start_s, stop_s, TotalTime = 0;
+
+		start_s = clock();
+		/*
+
+		*/
+		stop_s = clock();
+		TotalTime += (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000;
+		System::String^ imagePath;
+		std::string img;
+		img = "..//Data//Input//lena.png";
+
+		imagePath = marshal_as<System::String^>(img);
+		int* imageData = inputImage(&ImageWidth, &ImageHeight, imagePath);
+
+
+
+
+		/// <summary>
+		/// //////////////
+		/// </summary>
+		/// <returns></returns>
+		kernelsize = 7;
 		kernel = createHighPassKernel(kernelsize);
 		
-		printf("process zero printing unpadded height as %d", ImageHeight);
+		
 		computePadding(imageData, ImageHeight, ImageWidth, kernelsize, paddedheight, paddedwidth, paddedimage);
+
 		MPI_Bcast(&kernelsize, 1, MPI_INT, 0, MPI_COMM_WORLD);
 		MPI_Bcast(kernel, kernelsize * kernelsize, MPI_INT, 0, MPI_COMM_WORLD);
+
 		MPI_Bcast(&paddedheight, 1, MPI_INT, 0, MPI_COMM_WORLD);
 		MPI_Bcast(&paddedwidth, 1, MPI_INT, 0, MPI_COMM_WORLD);
 		MPI_Bcast(paddedimage, paddedheight * paddedwidth, MPI_INT, 0, MPI_COMM_WORLD);
-		printf("process zero printing padded height as %d", paddedheight);
 		
+		////// Distribution
 		rowsperprocessor = paddedheight / (size);
-		printf("\nlsuasdiuasduiauiscbidasuduias %d ",(sizeof(paddedimage)/ sizeof(paddedimage[0])));
+		remainingrows = paddedheight % size;
+		localimagesize = rowsperprocessor * paddedwidth;
+		//printf("\nlsuasdiuasduiauiscbidasuduias %d ",(sizeof(paddedimage)/ sizeof(paddedimage[0])));
 		for (int i = 1; i < size; i++) {
 			startindex = rowsperprocessor * paddedwidth * (i-1);
-			if (i == size - 1) {
-				rowsperprocessor = paddedheight - (rowsperprocessor * (size - 2));
+			/*if (i == size - 1) {
+				rowsperprocessor = paddedheight - (rowsperprocessor * (size - 1));
 				islast = 1;
 			}
 			else {
 				rowsperprocessor = paddedheight / size;
 				islast = 0;
-			}
+			}*/
+			
+			
+
+			MPI_Send(&startindex, 1, MPI_INT, i, TagStartindex, MPI_COMM_WORLD);
+			MPI_Send(&rowsperprocessor, 1, MPI_INT, i, TagProcessorRows, MPI_COMM_WORLD);
+			//MPI_Send(&islast, 1, MPI_INT, i, TagIsLast, MPI_COMM_WORLD);
+			MPI_Send(&localimagesize, 1, MPI_INT, i, TaglocalimageSize, MPI_COMM_WORLD);
+
+			
+
+		}
+		if (size != 1) {
+			startindex += localimagesize;
+			rowsperprocessor += remainingrows;
+			//islast = 0;
 			localimagesize = rowsperprocessor * paddedwidth;
-			if (i != 0) {
-
-				MPI_Send(&startindex, 1, MPI_INT, i, TagStartindex, MPI_COMM_WORLD);
-				MPI_Send(&rowsperprocessor, 1, MPI_INT, i, TagProcessorRows, MPI_COMM_WORLD);
-				MPI_Send(&islast, 1, MPI_INT, i, TagIsLast, MPI_COMM_WORLD);
-				MPI_Send(&localimagesize, 1, MPI_INT, i, TaglocalimageSize, MPI_COMM_WORLD);
-
-			}
-
 		}
 	}
 	else {
-
+		
 		MPI_Bcast(&kernelsize, 1, MPI_INT, 0, MPI_COMM_WORLD);
-		kernel = new int[kernelsize * kernelsize];
-		MPI_Bcast(kernel, kernelsize * kernelsize, MPI_INT, 0, MPI_COMM_WORLD);
-		MPI_Bcast(&paddedheight, 1, MPI_INT, 0, MPI_COMM_WORLD);
-		MPI_Bcast(&paddedwidth, 1, MPI_INT, 0, MPI_COMM_WORLD);
-		MPI_Bcast(paddedimage, paddedheight * paddedwidth, MPI_INT, 0, MPI_COMM_WORLD);
-		printf("another process than zero printing padded height as %d", paddedheight);
 
+		kernel = new int[kernelsize * kernelsize];
+		
+		MPI_Bcast(kernel, kernelsize * kernelsize, MPI_INT, 0, MPI_COMM_WORLD);
+	
+		MPI_Bcast(&paddedheight, 1, MPI_INT, 0, MPI_COMM_WORLD);
+		
+		MPI_Bcast(&paddedwidth, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	
+		paddedimage = new int[paddedwidth * paddedheight];
+
+		MPI_Bcast(paddedimage, paddedheight * paddedwidth, MPI_INT, 0, MPI_COMM_WORLD);
+	//	printf("another process than zero printing padded height as %d", paddedheight);
+	
 
 		MPI_Recv(&startindex, 1, MPI_INT, 0, TagStartindex, MPI_COMM_WORLD, &ReveiveStatus);
+
+		
 		MPI_Recv(&rowsperprocessor, 1, MPI_INT, 0, TagProcessorRows, MPI_COMM_WORLD, &ReveiveStatus);
-		MPI_Recv(&islast, 1, MPI_INT, 0, TagIsLast, MPI_COMM_WORLD, &ReveiveStatus);
+		//MPI_Recv(&islast, 1, MPI_INT, 0, TagIsLast, MPI_COMM_WORLD, &ReveiveStatus);
 		MPI_Recv(&localimagesize, 1, MPI_INT, 0, TaglocalimageSize, MPI_COMM_WORLD, &ReveiveStatus);
+		
 	}
+	
 
+	int* localImage = applyKernel(kernel, kernelsize, paddedimage, startindex, rowsperprocessor, paddedwidth,paddedheight, subsize);
+	if (rank != 0) {
 
-
-
-	int* localImage = applyKernel(kernel, kernelsize, paddedimage, startindex, rowsperprocessor, paddedwidth, subsize);
-	createImage(localImage, ImageWidth, ImageHeight, 1);
-	if(rank!=0){
 
 		MPI_Send(&subsize, 1, MPI_INT, 0, TaglocalimageSize, MPI_COMM_WORLD);
 		MPI_Send(localImage, subsize, MPI_INT, 0, TagLocalImage, MPI_COMM_WORLD);
-		MPI_Send(&startindex, 1, MPI_INT, 0, TagStartindex, MPI_COMM_WORLD);
-		printf("process %d sent sub image \n", rank);
-	
+
 	}
-
-
-
-
-
-
-
 	if (rank == 0) {
-		//createImage(paddedimage, paddedwidth, paddedheight, 1);
-		//std::cout << "time: " << TotalTime <<std:: endl;
+		int receivedsubsize;
+		int* recievedimg=new int[ImageHeight*ImageWidth];
+		
+		for (int i = 1; i < size; i++) {
+			MPI_Recv(&receivedsubsize, 1, MPI_INT, i, TaglocalimageSize, MPI_COMM_WORLD, &ReveiveStatus);
+			//recievedimg = new int[receivedsubsize];
+			MPI_Recv(&recievedimg[(i-1)*receivedsubsize], receivedsubsize, MPI_INT, i, TagLocalImage, MPI_COMM_WORLD,&ReveiveStatus);
+		}
+		for (int i = (size - 1) * receivedsubsize; i < ImageHeight * ImageWidth; i++) {
+			recievedimg[i] = localImage[i - (size - 1) * receivedsubsize];
+		}
+		createImage(recievedimg, ImageWidth, ImageHeight, 1);
 	}
+	
 
 
-	std::free(imageData);
+	
+	
+
+
+	
+
+
+
+
+	//std::free(localImage);
 	MPI_Finalize();
 	return 0;
 

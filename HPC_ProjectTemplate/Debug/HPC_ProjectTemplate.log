@@ -1,5 +1,7 @@
 ﻿  Source.cpp
-C:\Users\omark\Desktop\HPC_ProjectTemplate\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(228,65): warning C4244: '+=': conversion from 'double' to 'int', possible loss of data
-C:\Users\omark\Desktop\HPC_ProjectTemplate\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(235,6): warning C4101: 'rowssent': unreferenced local variable
+C:\Users\omark\Desktop\HPC_ProjectTemplate\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(242,66): warning C4244: '+=': conversion from 'double' to 'int', possible loss of data
+C:\Users\omark\Desktop\HPC_ProjectTemplate\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(227,6): warning C4101: 'islast': unreferenced local variable
+C:\Users\omark\Desktop\HPC_ProjectTemplate\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(226,6): warning C4101: 'rowssent': unreferenced local variable
+C:\Users\omark\Desktop\HPC_ProjectTemplate\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(232,7): warning C4101: 'resultingimage': unreferenced local variable
   Source.obj : MSIL module encountered; incremental linking is disabled for MSIL; performing full link
   HPC_ProjectTemplate.vcxproj -> C:\Users\omark\Desktop\HPC_ProjectTemplate\HPC_ProjectTemplate\Debug\HPC_ProjectTemplate.exe
